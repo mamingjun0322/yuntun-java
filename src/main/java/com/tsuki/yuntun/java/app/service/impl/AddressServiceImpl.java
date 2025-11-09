@@ -34,9 +34,6 @@ public class AddressServiceImpl implements AddressService {
     private final AddressMapper addressMapper;
     private final ShopMapper shopMapper;
     
-    @Value("${app.shop.delivery-range}")
-    private BigDecimal deliveryRange;
-    
     @Override
     public List<AddressVO> getAddressList(Long userId) {
         List<Address> addresses = addressMapper.selectList(new LambdaQueryWrapper<Address>()
@@ -155,8 +152,8 @@ public class AddressServiceImpl implements AddressService {
                 shop.getLatitude(), shop.getLongitude(),
                 dto.getLatitude(), dto.getLongitude());
         
-        // 判断是否在配送范围内
-        boolean inRange = distance.compareTo(deliveryRange) <= 0;
+        // 判断是否在配送范围内（从数据库shop表获取配送范围）
+        boolean inRange = distance.compareTo(shop.getDeliveryRange()) <= 0;
         
         return CheckRangeVO.builder()
                 .inRange(inRange)

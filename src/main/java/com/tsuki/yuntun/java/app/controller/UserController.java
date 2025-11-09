@@ -80,7 +80,17 @@ public class UserController extends BaseController {
     public Result<Void> updateUserInfo(@RequestBody UpdateUserInfoDTO dto) {
         Long userId = getCurrentUserId();
         userService.updateUserInfo(userId, dto);
-        return Result.success();
+        return Result.success("更新成功", null);
+    }
+    
+    /**
+     * 修改密码
+     */
+    @PutMapping("/updatePassword")
+    public Result<Void> updatePassword(@Valid @RequestBody com.tsuki.yuntun.java.app.dto.UpdatePasswordDTO dto) {
+        Long userId = getCurrentUserId();
+        userService.updatePassword(userId, dto);
+        return Result.success("密码修改成功", null);
     }
     
     /**

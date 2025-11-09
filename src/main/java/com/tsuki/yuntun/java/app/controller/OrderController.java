@@ -62,9 +62,9 @@ public class OrderController extends BaseController {
      */
     @PutMapping("/cancel/{id}")
     public Result<Void> cancelOrder(@PathVariable Long id, 
-                                    @RequestBody Map<String, String> params) {
+                                    @RequestBody(required = false) Map<String, String> params) {
         Long userId = getCurrentUserId();
-        String reason = params.get("reason");
+        String reason = params != null ? params.get("reason") : null;
         orderService.cancelOrder(userId, id, reason);
         return Result.success();
     }

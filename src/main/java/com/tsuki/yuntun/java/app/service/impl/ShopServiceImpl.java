@@ -18,10 +18,8 @@ import com.tsuki.yuntun.java.app.vo.ShopInfoVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -38,17 +36,7 @@ public class ShopServiceImpl implements ShopService {
     private final NoticeMapper noticeMapper;
     private final RedisUtil redisUtil;
     
-    @Value("${app.shop.delivery-range}")
-    private BigDecimal deliveryRange;
-    
-    @Value("${app.shop.min-delivery-amount}")
-    private BigDecimal minDeliveryAmount;
-    
-    @Value("${app.shop.delivery-fee}")
-    private BigDecimal deliveryFee;
-    
-    @Value("${app.shop.packing-fee}")
-    private BigDecimal packingFee;
+    // 配置项已移至数据库shop表中，无需使用@Value注解
     
     @Override
     public ShopInfoVO getShopInfo() {
@@ -113,11 +101,17 @@ public class ShopServiceImpl implements ShopService {
     
     @Override
     public DeliveryConfigVO getDeliveryConfig() {
+        // 从数据库查询店铺配置
+        Shop shop = shopMapper.selectOne(new LambdaQueryWrapper<Shop>().last("LIMIT 1"));
+        if (shop == null) {
+            throw new BusinessException("店铺信息不存在");
+        }
+        
         return DeliveryConfigVO.builder()
-                .minAmount(minDeliveryAmount)
-                .deliveryFee(deliveryFee)
-                .packingFee(packingFee)
-                .range(deliveryRange)
+                .minAmount(shop.getMinDeliveryAmount())
+                .deliveryFee(shop.getDeliveryFee())
+                .packingFee(shop.getPackingFee())
+                .range(shop.getDeliveryRange())
                 .build();
     }
 }

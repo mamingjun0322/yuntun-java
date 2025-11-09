@@ -45,6 +45,16 @@ public class UserInfoVO {
     private Integer level;
     
     /**
+     * 性别 (0-未知 1-男 2-女)
+     */
+    private Integer gender;
+    
+    /**
+     * 生日
+     */
+    private String birthday;
+    
+    /**
      * 状态 (1-正常 0-禁用)
      */
     private Integer status;

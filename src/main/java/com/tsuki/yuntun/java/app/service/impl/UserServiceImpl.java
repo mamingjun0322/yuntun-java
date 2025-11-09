@@ -50,15 +50,41 @@ public class UserServiceImpl implements UserService {
     private final PointsHistoryMapper pointsHistoryMapper;
     private final RedisUtil redisUtil;
     private final WxApiUtil wxApiUtil;
+    private final com.tsuki.yuntun.java.app.mapper.SystemConfigMapper systemConfigMapper;
     
-    @Value("${app.sms.expire-time}")
-    private Long smsExpireTime;
+    /**
+     * 从数据库获取短信过期时间配置
+     */
+    private Long getSmsExpireTime() {
+        String value = getConfigValue("sms.expire_time");
+        return value != null ? Long.parseLong(value) : 300L; // 默认300秒
+    }
     
-    @Value("${app.points.sign-in}")
-    private Integer signInPoints;
+    /**
+     * 从数据库获取签到积分配置
+     */
+    private Integer getSignInPoints() {
+        String value = getConfigValue("points.sign_in");
+        return value != null ? Integer.parseInt(value) : 10; // 默认10积分
+    }
     
-    @Value("${app.points.order}")
-    private Integer orderPoints;
+    /**
+     * 从数据库获取订单积分配置
+     */
+    private Integer getOrderPoints() {
+        String value = getConfigValue("points.order");
+        return value != null ? Integer.parseInt(value) : 10; // 默认10积分
+    }
+    
+    /**
+     * 获取配置值
+     */
+    private String getConfigValue(String configKey) {
+        com.tsuki.yuntun.java.entity.SystemConfig config = systemConfigMapper.selectOne(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.tsuki.yuntun.java.entity.SystemConfig>()
+                        .eq(com.tsuki.yuntun.java.entity.SystemConfig::getConfigKey, configKey));
+        return config != null ? config.getConfigValue() : null;
+    }
     
     /**
      * 微信登录
@@ -145,7 +171,7 @@ public class UserServiceImpl implements UserService {
         
         // 存入Redis，5分钟过期
         String key = RedisConstant.SMS_CODE_PREFIX + dto.getPhone();
-        redisUtil.set(key, code, smsExpireTime, TimeUnit.SECONDS);
+        redisUtil.set(key, code, getSmsExpireTime(), TimeUnit.SECONDS);
         
         // TODO: 这里应该调用短信服务发送验证码
         log.info("手机号：{}，验证码：{}", dto.getPhone(), code);
@@ -259,6 +285,8 @@ public class UserServiceImpl implements UserService {
                 .phone(user.getPhone())
                 .points(user.getPoints())
                 .level(user.getLevel())
+                .gender(user.getGender())
+                .birthday(user.getBirthday())
                 .couponCount(couponCount.intValue())
                 .build();
     }
@@ -315,14 +343,14 @@ public class UserServiceImpl implements UserService {
         
         // 增加积分
         User user = userMapper.selectById(userId);
-        user.setPoints(user.getPoints() + signInPoints);
+        user.setPoints(user.getPoints() + getSignInPoints());
         userMapper.updateById(user);
         
         // 记录积分明细
         PointsHistory history = new PointsHistory();
         history.setUserId(userId);
         history.setTitle("签到");
-        history.setPoints(signInPoints);
+        history.setPoints(getSignInPoints());
         history.setType(1);
         pointsHistoryMapper.insert(history);
         
@@ -332,7 +360,29 @@ public class UserServiceImpl implements UserService {
                 - LocalDateTime.now().toEpochSecond(java.time.ZoneOffset.ofHours(8));
         redisUtil.set(key, "1", seconds, TimeUnit.SECONDS);
         
-        return signInPoints;
+        return getSignInPoints();
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updatePassword(Long userId, com.tsuki.yuntun.java.app.dto.UpdatePasswordDTO dto) {
+        // 查询用户
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        
+        // 验证旧密码（假设使用 BCrypt 加密，实际项目中应该使用 PasswordEncoder）
+        // 这里简化处理，实际应该使用加密比对
+        if (!user.getPassword().equals(dto.getOldPassword())) {
+            throw new BusinessException("旧密码错误");
+        }
+        
+        // 更新密码
+        user.setPassword(dto.getNewPassword());
+        userMapper.updateById(user);
+        
+        log.info("用户ID: {} 修改密码成功", userId);
     }
 }
 

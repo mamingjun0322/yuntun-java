@@ -3,10 +3,7 @@ package com.tsuki.yuntun.java.app.controller;
 import com.tsuki.yuntun.java.common.Result;
 import com.tsuki.yuntun.java.app.service.CommonService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
@@ -31,6 +28,20 @@ public class CommonController {
         Map<String, String> result = new HashMap<>();
         result.put("url", url);
         return Result.success("上传成功", result);
+    }
+    
+    /**
+     * 生成小程序码（带桌位号）
+     */
+    @PostMapping("/qrcode/generate")
+    public Result<Map<String, String>> generateQrCode(
+            @RequestParam String tableNo,
+            @RequestParam(required = false) String page) {
+        String qrCodeUrl = commonService.generateQrCode(tableNo, page);
+        Map<String, String> result = new HashMap<>();
+        result.put("qrCodeUrl", qrCodeUrl);
+        result.put("tableNo", tableNo);
+        return Result.success("生成成功", result);
     }
 }
 

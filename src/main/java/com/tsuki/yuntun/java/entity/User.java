@@ -62,6 +62,16 @@ public class User implements Serializable {
     private Integer level;
     
     /**
+     * 性别 (0-未知 1-男 2-女)
+     */
+    private Integer gender;
+    
+    /**
+     * 生日
+     */
+    private String birthday;
+    
+    /**
      * 微信openid
      */
     private String openid;

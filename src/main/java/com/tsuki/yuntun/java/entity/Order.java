@@ -108,6 +108,16 @@ public class Order implements Serializable {
     private BigDecimal totalAmount;
     
     /**
+     * 支付链接
+     */
+    private String paymentUrl;
+    
+    /**
+     * 支付链接ID
+     */
+    private Long paymentLinkId;
+    
+    /**
      * 优惠券ID
      */
     private Long couponId;

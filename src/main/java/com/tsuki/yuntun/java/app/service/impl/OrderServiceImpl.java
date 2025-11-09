@@ -39,6 +39,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderMapper orderMapper;
     private final OrderGoodsMapper orderGoodsMapper;
     private final OrderCommentMapper orderCommentMapper;
+    private final com.tsuki.yuntun.java.app.mapper.PaymentLinkMapper paymentLinkMapper;
     
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -62,6 +63,13 @@ public class OrderServiceImpl implements OrderService {
         order.setCouponDiscount(dto.getCouponDiscount() != null ? dto.getCouponDiscount() : BigDecimal.ZERO);
         order.setCommented(false);
         
+        // 查找匹配的支付链接
+        com.tsuki.yuntun.java.entity.PaymentLink paymentLink = findPaymentLinkByAmount(order.getTotalAmount());
+        if (paymentLink != null) {
+            order.setPaymentUrl(paymentLink.getPaymentUrl());
+            order.setPaymentLinkId(paymentLink.getId());
+        }
+        
         orderMapper.insert(order);
         
         // 保存订单商品
@@ -81,6 +89,14 @@ public class OrderServiceImpl implements OrderService {
         Map<String, Object> result = new HashMap<>();
         result.put("orderId", order.getId());
         result.put("orderNo", order.getOrderNo());
+        result.put("totalAmount", order.getTotalAmount());
+        
+        // 返回支付链接信息
+        if (paymentLink != null) {
+            result.put("paymentUrl", paymentLink.getPaymentUrl());
+            result.put("paymentType", paymentLink.getPaymentType());
+            result.put("qrCodeUrl", paymentLink.getQrCodeUrl());
+        }
         
         return result;
     }
@@ -195,6 +211,46 @@ public class OrderServiceImpl implements OrderService {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         int random = (int) ((Math.random() * 9 + 1) * 1000);
         return timestamp + random;
+    }
+    
+    /**
+     * 根据金额查找匹配的支付链接
+     */
+    private com.tsuki.yuntun.java.entity.PaymentLink findPaymentLinkByAmount(BigDecimal amount) {
+        try {
+            // 1. 先查找完全匹配的金额
+            com.tsuki.yuntun.java.entity.PaymentLink exactMatch = paymentLinkMapper.selectOne(
+                    new LambdaQueryWrapper<com.tsuki.yuntun.java.entity.PaymentLink>()
+                            .eq(com.tsuki.yuntun.java.entity.PaymentLink::getAmount, amount)
+                            .eq(com.tsuki.yuntun.java.entity.PaymentLink::getStatus, 1)
+                            .eq(com.tsuki.yuntun.java.entity.PaymentLink::getPaymentType, "wechat")
+                            .last("LIMIT 1"));
+            
+            if (exactMatch != null) {
+                log.info("找到完全匹配的支付链接：订单金额={}, 支付链接金额={}", amount, exactMatch.getAmount());
+                return exactMatch;
+            }
+            
+            // 2. 如果没有完全匹配，查找大于等于订单金额的最小支付链接（向上取整）
+            com.tsuki.yuntun.java.entity.PaymentLink closestMatch = paymentLinkMapper.selectOne(
+                    new LambdaQueryWrapper<com.tsuki.yuntun.java.entity.PaymentLink>()
+                            .ge(com.tsuki.yuntun.java.entity.PaymentLink::getAmount, amount)
+                            .eq(com.tsuki.yuntun.java.entity.PaymentLink::getStatus, 1)
+                            .eq(com.tsuki.yuntun.java.entity.PaymentLink::getPaymentType, "wechat")
+                            .orderByAsc(com.tsuki.yuntun.java.entity.PaymentLink::getAmount)
+                            .last("LIMIT 1"));
+            
+            if (closestMatch != null) {
+                log.info("找到最接近的支付链接：订单金额={}, 支付链接金额={}", amount, closestMatch.getAmount());
+                return closestMatch;
+            }
+            
+            log.warn("未找到匹配的支付链接：订单金额={}", amount);
+            return null;
+        } catch (Exception e) {
+            log.error("查找支付链接失败：订单金额={}", amount, e);
+            return null;
+        }
     }
     
     /**

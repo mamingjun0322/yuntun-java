@@ -58,5 +58,10 @@ public interface UserService {
      * 签到
      */
     Integer signIn(Long userId);
+    
+    /**
+     * 修改密码
+     */
+    void updatePassword(Long userId, com.tsuki.yuntun.java.app.dto.UpdatePasswordDTO dto);
 }
 

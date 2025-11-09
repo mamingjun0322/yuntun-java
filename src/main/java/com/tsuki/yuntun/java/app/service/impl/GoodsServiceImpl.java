@@ -125,10 +125,10 @@ public class GoodsServiceImpl implements GoodsService {
     public Page<GoodsVO> getRecommendGoods(Integer page, Integer pageSize) {
         Page<Goods> pageParam = new Page<>(page, pageSize);
         
+        // selectPage 会自动添加 LIMIT，不需要手动添加
         Page<Goods> result = goodsMapper.selectPage(pageParam, new LambdaQueryWrapper<Goods>()
                 .eq(Goods::getStatus, 1)
-                .orderByDesc(Goods::getSales)
-                .last("LIMIT " + pageSize));
+                .orderByDesc(Goods::getSales));
         
         Page<GoodsVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
         List<GoodsVO> voList = result.getRecords().stream().map(this::convertToVO).toList();
