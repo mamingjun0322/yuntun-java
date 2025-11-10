@@ -43,7 +43,16 @@ public class RedisUtil {
      */
     @SuppressWarnings("unchecked")
     public <T> T get(String key, Class<T> clazz) {
-        return (T) redisTemplate.opsForValue().get(key);
+        Object obj = redisTemplate.opsForValue().get(key);
+        if (obj == null) {
+            return null;
+        }
+        // 类型检查，避免ClassCastException
+        if (clazz.isInstance(obj)) {
+            return (T) obj;
+        }
+        // 类型不匹配，返回null，让调用方从数据库重新加载
+        return null;
     }
     
     /**

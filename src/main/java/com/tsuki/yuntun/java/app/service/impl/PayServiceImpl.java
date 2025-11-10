@@ -39,9 +39,9 @@ public class PayServiceImpl implements PayService {
             throw new BusinessException("订单状态异常，当前状态不支持支付");
         }
         
-        // 如果订单没有支付链接，抛出异常
+        // 如果订单没有收款码，抛出异常
         if (order.getPaymentUrl() == null || order.getPaymentUrl().isEmpty()) {
-            throw new BusinessException("该订单暂无可用支付方式，请联系客服");
+            throw new BusinessException("该订单暂无可用收款码，请联系客服");
         }
         
         // 构建支付信息
@@ -49,7 +49,7 @@ public class PayServiceImpl implements PayService {
                 .orderId(order.getId())
                 .orderNo(order.getOrderNo())
                 .amount(order.getTotalAmount())
-                .paymentUrl(order.getPaymentUrl())
+                .paymentUrl(order.getPaymentUrl()) // 收款码图片地址
                 .paymentType("wechat")
                 .build();
     }

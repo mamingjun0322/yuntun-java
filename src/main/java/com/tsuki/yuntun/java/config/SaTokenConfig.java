@@ -3,6 +3,7 @@ package com.tsuki.yuntun.java.config;
 import cn.dev33.satoken.interceptor.SaInterceptor;
 import cn.dev33.satoken.router.SaRouter;
 import cn.dev33.satoken.stp.StpUtil;
+import com.tsuki.yuntun.java.util.StpAdminUtil;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -18,9 +19,15 @@ public class SaTokenConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // 注册Sa-Token拦截器，校验规则为StpUtil.checkLogin()登录校验
+        // 管理员端路由拦截器（使用独立的认证体系）
         registry.addInterceptor(new SaInterceptor(handle -> {
-            // 小程序端路由拦截（需要登录的接口）
+            SaRouter.match("/admin/**")
+                    .notMatch("/admin/auth/login") // 排除登录接口
+                    .check(r -> StpAdminUtil.stpLogic.checkLogin());
+        })).addPathPatterns("/admin/**");
+        
+        // 小程序端路由拦截器（普通用户认证）
+        registry.addInterceptor(new SaInterceptor(handle -> {
             SaRouter.match("/**")
                     .notMatch(
                             // 排除不需要登录的接口
@@ -34,8 +41,10 @@ public class SaTokenConfig implements WebMvcConfigurer {
                             "/config/**",
                             "/common/**",
                             "/coupon/list",
-                            // 排除后台管理登录接口
-                            "/admin/auth/login",
+                            // 排除管理员端所有接口
+                            "/admin/**",
+                            // 排除静态资源
+                            "/uploads/**",
                             // 排除Swagger文档
                             "/doc.html",
                             "/swagger-ui/**",

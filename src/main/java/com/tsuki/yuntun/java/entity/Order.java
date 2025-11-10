@@ -108,7 +108,7 @@ public class Order implements Serializable {
     private BigDecimal totalAmount;
     
     /**
-     * 支付链接
+     * 收款码图片地址
      */
     private String paymentUrl;
     

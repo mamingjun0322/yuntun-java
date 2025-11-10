@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 支付链接Service实现类
+ * 收款码配置Service实现类
  */
 @Slf4j
 @Service
@@ -75,7 +75,7 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
         }
         
         if (link == null) {
-            throw new BusinessException("未找到匹配的支付链接，请联系管理员添加对应金额的支付链接");
+            throw new BusinessException("未找到匹配的收款码，请联系管理员添加对应金额的收款码配置");
         }
         
         return convertToVO(link);
@@ -85,7 +85,7 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
     public PaymentLinkVO getPaymentLinkDetail(Long id) {
         PaymentLink link = paymentLinkMapper.selectById(id);
         if (link == null) {
-            throw new BusinessException("支付链接不存在");
+            throw new BusinessException("收款码配置不存在");
         }
         return convertToVO(link);
     }
@@ -100,7 +100,7 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
                         .eq(PaymentLink::getPaymentType, dto.getPaymentType()));
         
         if (count > 0) {
-            throw new BusinessException("该金额的支付链接已存在");
+            throw new BusinessException("该金额的收款码配置已存在");
         }
         
         PaymentLink link = new PaymentLink();
@@ -118,7 +118,7 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
         }
         
         paymentLinkMapper.insert(link);
-        log.info("添加支付链接成功：金额={}, URL={}", link.getAmount(), link.getPaymentUrl());
+        log.info("添加收款码配置成功：金额={}, 收款码图片地址={}", link.getAmount(), link.getPaymentUrl());
     }
     
     @Override
@@ -126,7 +126,7 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
     public void updatePaymentLink(Long id, PaymentLinkDTO dto) {
         PaymentLink link = paymentLinkMapper.selectById(id);
         if (link == null) {
-            throw new BusinessException("支付链接不存在");
+            throw new BusinessException("收款码配置不存在");
         }
         
         // 如果修改了金额，检查新金额是否已存在
@@ -138,7 +138,7 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
                             .ne(PaymentLink::getId, id));
             
             if (count > 0) {
-                throw new BusinessException("该金额的支付链接已存在");
+                throw new BusinessException("该金额的收款码配置已存在");
             }
         }
         
@@ -146,7 +146,7 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
         link.setId(id);
         paymentLinkMapper.updateById(link);
         
-        log.info("更新支付链接成功：ID={}, 金额={}", id, link.getAmount());
+        log.info("更新收款码配置成功：ID={}, 金额={}", id, link.getAmount());
     }
     
     @Override
@@ -154,11 +154,11 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
     public void deletePaymentLink(Long id) {
         PaymentLink link = paymentLinkMapper.selectById(id);
         if (link == null) {
-            throw new BusinessException("支付链接不存在");
+            throw new BusinessException("收款码配置不存在");
         }
         
         paymentLinkMapper.deleteById(id);
-        log.info("删除支付链接成功：ID={}, 金额={}", id, link.getAmount());
+        log.info("删除收款码配置成功：ID={}, 金额={}", id, link.getAmount());
     }
     
     @Override
@@ -166,13 +166,13 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
     public void toggleStatus(Long id) {
         PaymentLink link = paymentLinkMapper.selectById(id);
         if (link == null) {
-            throw new BusinessException("支付链接不存在");
+            throw new BusinessException("收款码配置不存在");
         }
         
         link.setStatus(link.getStatus() == 1 ? 0 : 1);
         paymentLinkMapper.updateById(link);
         
-        log.info("切换支付链接状态成功：ID={}, 新状态={}", id, link.getStatus());
+        log.info("切换收款码配置状态成功：ID={}, 新状态={}", id, link.getStatus());
     }
     
     /**

@@ -63,12 +63,14 @@ public class OrderServiceImpl implements OrderService {
         order.setCouponDiscount(dto.getCouponDiscount() != null ? dto.getCouponDiscount() : BigDecimal.ZERO);
         order.setCommented(false);
         
-        // 查找匹配的支付链接
+        // 查找匹配的支付链接和收款码
         com.tsuki.yuntun.java.entity.PaymentLink paymentLink = findPaymentLinkByAmount(order.getTotalAmount());
         if (paymentLink != null) {
+            // paymentUrl 存储收款码图片地址
             order.setPaymentUrl(paymentLink.getPaymentUrl());
             order.setPaymentLinkId(paymentLink.getId());
         }
+
         
         orderMapper.insert(order);
         
@@ -91,11 +93,12 @@ public class OrderServiceImpl implements OrderService {
         result.put("orderNo", order.getOrderNo());
         result.put("totalAmount", order.getTotalAmount());
         
-        // 返回支付链接信息
+        // 返回收款码信息
         if (paymentLink != null) {
+            // paymentUrl 是收款码图片地址（优先返回）
             result.put("paymentUrl", paymentLink.getPaymentUrl());
+            result.put("qrCodeUrl", paymentLink.getPaymentUrl()); // 兼容字段，使用相同的收款码图片
             result.put("paymentType", paymentLink.getPaymentType());
-            result.put("qrCodeUrl", paymentLink.getQrCodeUrl());
         }
         
         return result;

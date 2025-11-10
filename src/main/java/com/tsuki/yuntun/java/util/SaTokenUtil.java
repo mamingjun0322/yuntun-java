@@ -4,11 +4,14 @@ import cn.dev33.satoken.stp.StpUtil;
 
 /**
  * Sa-Token工具类
+ * 使用 Sa-Token 多账号认证体系：
+ * - StpUtil: 普通用户认证（默认）
+ * - StpAdminUtil: 管理员认证（独立）
  */
 public class SaTokenUtil {
     
     /**
-     * 用户登录
+     * 普通用户登录
      * @param userId 用户ID
      * @return token
      */
@@ -18,53 +21,70 @@ public class SaTokenUtil {
     }
     
     /**
-     * 管理员登录（使用负数ID区分）
+     * 管理员登录（使用独立的认证体系）
      * @param adminId 管理员ID
      * @return token
      */
     public static String adminLogin(Long adminId) {
-        // 使用负数ID来区分管理员
-        StpUtil.login(-adminId);
-        return StpUtil.getTokenValue();
+        // 使用管理员专用的 StpLogic 进行登录
+        StpAdminUtil.stpLogic.login(adminId);
+        return StpAdminUtil.stpLogic.getTokenValue();
     }
     
     /**
-     * 获取当前登录用户ID
-     * @return 用户ID
+     * 获取当前登录用户ID（普通用户）
+     * @return 用户ID，未登录返回null
      */
     public static Long getLoginUserId() {
-        long loginId = StpUtil.getLoginIdAsLong();
-        // 如果是负数，说明是管理员，返回null
-        return loginId > 0 ? loginId : null;
+        if (!StpUtil.isLogin()) {
+            return null;
+        }
+        return StpUtil.getLoginIdAsLong();
     }
     
     /**
      * 获取当前登录管理员ID
-     * @return 管理员ID
+     * @return 管理员ID，未登录返回null
      */
     public static Long getLoginAdminId() {
-        long loginId = StpUtil.getLoginIdAsLong();
-        // 如果是负数，取绝对值返回管理员ID
-        return loginId < 0 ? -loginId : null;
+        if (!StpAdminUtil.stpLogic.isLogin()) {
+            return null;
+        }
+        return StpAdminUtil.stpLogic.getLoginIdAsLong();
     }
     
     /**
-     * 判断是否是管理员
-     * @return true-管理员 false-普通用户
+     * 判断是否是管理员登录
+     * @return true-已登录的管理员 false-未登录或普通用户
      */
     public static boolean isAdmin() {
-        return StpUtil.getLoginIdAsLong() < 0;
+        return StpAdminUtil.stpLogic.isLogin();
     }
     
     /**
-     * 退出登录
+     * 判断是否是普通用户登录
+     * @return true-已登录的普通用户 false-未登录或管理员
+     */
+    public static boolean isUser() {
+        return StpUtil.isLogin();
+    }
+    
+    /**
+     * 普通用户退出登录
      */
     public static void logout() {
         StpUtil.logout();
     }
     
     /**
-     * 检查是否登录
+     * 管理员退出登录
+     */
+    public static void adminLogout() {
+        StpAdminUtil.stpLogic.logout();
+    }
+    
+    /**
+     * 检查普通用户是否登录
      * @return true-已登录 false-未登录
      */
     public static boolean isLogin() {
@@ -72,7 +92,15 @@ public class SaTokenUtil {
     }
     
     /**
-     * 设置Session数据
+     * 检查管理员是否登录
+     * @return true-已登录 false-未登录
+     */
+    public static boolean isAdminLogin() {
+        return StpAdminUtil.stpLogic.isLogin();
+    }
+    
+    /**
+     * 设置普通用户Session数据
      * @param key 键
      * @param value 值
      */
@@ -81,7 +109,7 @@ public class SaTokenUtil {
     }
     
     /**
-     * 获取Session数据
+     * 获取普通用户Session数据
      * @param key 键
      * @return 值
      */
@@ -90,11 +118,37 @@ public class SaTokenUtil {
     }
     
     /**
-     * 踢人下线
+     * 设置管理员Session数据
+     * @param key 键
+     * @param value 值
+     */
+    public static void setAdminSession(String key, Object value) {
+        StpAdminUtil.stpLogic.getSession().set(key, value);
+    }
+    
+    /**
+     * 获取管理员Session数据
+     * @param key 键
+     * @return 值
+     */
+    public static Object getAdminSession(String key) {
+        return StpAdminUtil.stpLogic.getSession().get(key);
+    }
+    
+    /**
+     * 踢普通用户下线
      * @param loginId 登录ID
      */
     public static void kickout(Long loginId) {
         StpUtil.kickout(loginId);
+    }
+    
+    /**
+     * 踢管理员下线
+     * @param loginId 登录ID
+     */
+    public static void kickoutAdmin(Long loginId) {
+        StpAdminUtil.stpLogic.kickout(loginId);
     }
 }
 

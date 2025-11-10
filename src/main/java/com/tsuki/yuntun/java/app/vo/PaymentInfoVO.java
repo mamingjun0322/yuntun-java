@@ -32,7 +32,7 @@ public class PaymentInfoVO {
     private BigDecimal amount;
     
     /**
-     * 支付链接
+     * 收款码图片地址
      */
     private String paymentUrl;
     
@@ -42,7 +42,7 @@ public class PaymentInfoVO {
     private String paymentType;
     
     /**
-     * 二维码URL（可选）
+     * 二维码URL（可选，备用字段）
      */
     private String qrCodeUrl;
 }

@@ -13,8 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 后台订单管理Service实现类
@@ -70,30 +70,110 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     }
     
     @Override
-    public Object getOrderStatistics() {
-        // 统计今日订单
+    public com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO getOrderStatistics() {
+        com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO vo = new com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO();
+        
+        // 今日开始时间
         LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
-        Long todayCount = orderMapper.selectCount(new LambdaQueryWrapper<Order>()
+        
+        // 1. 统计今日订单数
+        Long todayOrderCount = orderMapper.selectCount(new LambdaQueryWrapper<Order>()
                 .ge(Order::getCreateTime, todayStart));
+        vo.setTodayOrderCount(todayOrderCount);
         
-        // 统计今日销售额
-        // 注意：这里简化处理，实际应该使用聚合查询
-        BigDecimal todayAmount = BigDecimal.ZERO;
+        // 2. 统计今日营业额
+        List<Order> todayOrders = orderMapper.selectList(new LambdaQueryWrapper<Order>()
+                .ge(Order::getCreateTime, todayStart)
+                .in(Order::getStatus, 3, 4)); // 已完成和已评价的订单
+        BigDecimal todayRevenue = todayOrders.stream()
+                .map(Order::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        vo.setTodayRevenue(todayRevenue);
         
-        // 统计待处理订单
-        Long pendingCount = orderMapper.selectCount(new LambdaQueryWrapper<Order>()
+        // 3. 统计待处理订单数（待接单）
+        Long pendingOrderCount = orderMapper.selectCount(new LambdaQueryWrapper<Order>()
                 .eq(Order::getStatus, 1));
+        vo.setPendingOrderCount(pendingOrderCount);
         
-        // 统计总订单数
-        Long totalCount = orderMapper.selectCount(null);
+        // 4. 统计总订单数
+        Long totalOrderCount = orderMapper.selectCount(null);
+        vo.setTotalOrderCount(totalOrderCount);
         
-        Map<String, Object> result = new HashMap<>();
-        result.put("todayOrderCount", todayCount);
-        result.put("todayAmount", todayAmount);
-        result.put("pendingOrderCount", pendingCount);
-        result.put("totalOrderCount", totalCount);
+        // 5. 统计总营业额
+        List<Order> allCompletedOrders = orderMapper.selectList(new LambdaQueryWrapper<Order>()
+                .in(Order::getStatus, 3, 4));
+        BigDecimal totalRevenue = allCompletedOrders.stream()
+                .map(Order::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        vo.setTotalRevenue(totalRevenue);
         
-        return result;
+        // 6. 获取最近10条订单
+        Page<Order> recentPage = orderMapper.selectPage(
+                new Page<>(1, 10),
+                new LambdaQueryWrapper<Order>().orderByDesc(Order::getCreateTime)
+        );
+        List<com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.RecentOrderVO> recentOrders = recentPage.getRecords().stream()
+                .map(order -> {
+                    com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.RecentOrderVO recentOrder = 
+                        new com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.RecentOrderVO();
+                    recentOrder.setId(order.getId());
+                    recentOrder.setOrderNo(order.getOrderNo());
+                    recentOrder.setType(order.getType());
+                    recentOrder.setStatus(order.getStatus());
+                    recentOrder.setTotalAmount(order.getTotalAmount());
+                    recentOrder.setCreateTime(order.getCreateTime().toString());
+                    return recentOrder;
+                })
+                .collect(Collectors.toList());
+        vo.setRecentOrders(recentOrders);
+        
+        // 7. 获取近7天订单趋势
+        List<com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.OrderTrendVO> orderTrend = new ArrayList<>();
+        for (int i = 6; i >= 0; i--) {
+            LocalDateTime dayStart = LocalDateTime.now().minusDays(i).withHour(0).withMinute(0).withSecond(0);
+            LocalDateTime dayEnd = dayStart.plusDays(1);
+            
+            Long count = orderMapper.selectCount(new LambdaQueryWrapper<Order>()
+                    .ge(Order::getCreateTime, dayStart)
+                    .lt(Order::getCreateTime, dayEnd));
+            
+            List<Order> dayOrders = orderMapper.selectList(new LambdaQueryWrapper<Order>()
+                    .ge(Order::getCreateTime, dayStart)
+                    .lt(Order::getCreateTime, dayEnd)
+                    .in(Order::getStatus, 3, 4));
+            BigDecimal amount = dayOrders.stream()
+                    .map(Order::getTotalAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.OrderTrendVO trend = 
+                new com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.OrderTrendVO();
+            trend.setDate(dayStart.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd")));
+            trend.setCount(count);
+            trend.setAmount(amount);
+            orderTrend.add(trend);
+        }
+        vo.setOrderTrend(orderTrend);
+        
+        // 8. 统计订单类型分布
+        Long dineInCount = orderMapper.selectCount(new LambdaQueryWrapper<Order>().eq(Order::getType, 1));
+        Long takeOutCount = orderMapper.selectCount(new LambdaQueryWrapper<Order>().eq(Order::getType, 2));
+        
+        List<com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.OrderTypeDistributionVO> distribution = new ArrayList<>();
+        com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.OrderTypeDistributionVO dineIn = 
+            new com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.OrderTypeDistributionVO();
+        dineIn.setName("堂食");
+        dineIn.setValue(dineInCount);
+        distribution.add(dineIn);
+        
+        com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.OrderTypeDistributionVO takeOut = 
+            new com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.OrderTypeDistributionVO();
+        takeOut.setName("外卖");
+        takeOut.setValue(takeOutCount);
+        distribution.add(takeOut);
+        
+        vo.setCategoryDistribution(distribution);
+        
+        return vo;
     }
 }
 

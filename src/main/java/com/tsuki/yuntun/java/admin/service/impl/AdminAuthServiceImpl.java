@@ -69,5 +69,10 @@ public class AdminAuthServiceImpl implements AdminAuthService {
         BeanUtils.copyProperties(admin, vo);
         return vo;
     }
+    
+    @Override
+    public void logout() {
+        SaTokenUtil.adminLogout();
+    }
 }
 

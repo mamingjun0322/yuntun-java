@@ -18,5 +18,10 @@ public interface AdminAuthService {
      * 获取管理员信息
      */
     AdminInfoVO getAdminInfo(Long adminId);
+    
+    /**
+     * 退出登录
+     */
+    void logout();
 }
 

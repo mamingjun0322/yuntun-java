@@ -1,5 +1,6 @@
 package com.tsuki.yuntun.java.admin.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -10,6 +11,34 @@ import java.math.BigDecimal;
  */
 @Data
 public class ShopConfigDTO {
+    
+    /**
+     * 店铺名称
+     */
+    @NotBlank(message = "店铺名称不能为空")
+    private String shopName;
+    
+    /**
+     * 联系电话
+     */
+    @NotBlank(message = "联系电话不能为空")
+    private String phone;
+    
+    /**
+     * 店铺地址
+     */
+    @NotBlank(message = "店铺地址不能为空")
+    private String address;
+    
+    /**
+     * 营业时间
+     */
+    private String businessHours;
+    
+    /**
+     * 店铺介绍
+     */
+    private String intro;
     
     /**
      * 配送范围(km)

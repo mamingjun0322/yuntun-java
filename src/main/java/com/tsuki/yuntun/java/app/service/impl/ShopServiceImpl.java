@@ -41,9 +41,15 @@ public class ShopServiceImpl implements ShopService {
     @Override
     public ShopInfoVO getShopInfo() {
         // 先从缓存获取
-        ShopInfoVO cache = redisUtil.get(RedisConstant.SHOP_INFO, ShopInfoVO.class);
-        if (cache != null) {
-            return cache;
+        try {
+            ShopInfoVO cache = redisUtil.get(RedisConstant.SHOP_INFO, ShopInfoVO.class);
+            if (cache != null) {
+                return cache;
+            }
+        } catch (ClassCastException e) {
+            // 如果缓存中的数据类型不匹配，清除缓存并重新加载
+            log.warn("缓存数据类型不匹配，清除缓存并重新加载: {}", e.getMessage());
+            redisUtil.delete(RedisConstant.SHOP_INFO);
         }
         
         // 从数据库查询

@@ -33,6 +33,24 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     private final SystemConfigMapper systemConfigMapper;
     private final ShopMapper shopMapper;
     
+    /**
+     * 创建默认店铺配置
+     */
+    private Shop createDefaultShop() {
+        Shop shop = new Shop();
+        shop.setName("云吞点餐");
+        shop.setPhone("暂未设置");
+        shop.setAddress("暂未设置");
+        shop.setBusinessHours("09:00-22:00");
+        shop.setIntro("欢迎光临");
+        shop.setDeliveryRange(new java.math.BigDecimal("5.0"));
+        shop.setMinDeliveryAmount(new java.math.BigDecimal("20.0"));
+        shop.setDeliveryFee(new java.math.BigDecimal("3.0"));
+        shop.setPackingFee(new java.math.BigDecimal("1.0"));
+        shopMapper.insert(shop);
+        return shop;
+    }
+    
     @Override
     public List<SystemConfigVO> getAllConfig() {
         List<SystemConfig> configs = systemConfigMapper.selectList(null);
@@ -83,11 +101,21 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     @Override
     public Map<String, Object> getShopConfig() {
         Shop shop = shopMapper.selectOne(new LambdaQueryWrapper<Shop>().last("LIMIT 1"));
+        
+        // 如果数据库没有店铺数据，创建默认配置
         if (shop == null) {
-            throw new BusinessException("店铺信息不存在");
+            shop = createDefaultShop();
+            log.info("数据库无店铺数据，已创建默认配置");
         }
         
         Map<String, Object> config = new HashMap<>();
+        // 基本信息
+        config.put("shopName", shop.getName());
+        config.put("phone", shop.getPhone());
+        config.put("address", shop.getAddress());
+        config.put("businessHours", shop.getBusinessHours());
+        config.put("intro", shop.getIntro());
+        // 配送设置
         config.put("deliveryRange", shop.getDeliveryRange());
         config.put("minDeliveryAmount", shop.getMinDeliveryAmount());
         config.put("deliveryFee", shop.getDeliveryFee());
@@ -100,18 +128,35 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     @Transactional(rollbackFor = Exception.class)
     public void updateShopConfig(ShopConfigDTO dto) {
         Shop shop = shopMapper.selectOne(new LambdaQueryWrapper<Shop>().last("LIMIT 1"));
+        
         if (shop == null) {
-            throw new BusinessException("店铺信息不存在");
+            // 如果数据库没有店铺数据，创建新的
+            shop = new Shop();
+            shop.setName(dto.getShopName());
+            shop.setPhone(dto.getPhone());
+            shop.setAddress(dto.getAddress());
+            shop.setBusinessHours(dto.getBusinessHours());
+            shop.setIntro(dto.getIntro());
+            shop.setDeliveryRange(dto.getDeliveryRange());
+            shop.setMinDeliveryAmount(dto.getMinDeliveryAmount());
+            shop.setDeliveryFee(dto.getDeliveryFee());
+            shop.setPackingFee(dto.getPackingFee());
+            shopMapper.insert(shop);
+            log.info("创建店铺配置成功：{}", dto);
+        } else {
+            // 更新现有配置
+            shop.setName(dto.getShopName());
+            shop.setPhone(dto.getPhone());
+            shop.setAddress(dto.getAddress());
+            shop.setBusinessHours(dto.getBusinessHours());
+            shop.setIntro(dto.getIntro());
+            shop.setDeliveryRange(dto.getDeliveryRange());
+            shop.setMinDeliveryAmount(dto.getMinDeliveryAmount());
+            shop.setDeliveryFee(dto.getDeliveryFee());
+            shop.setPackingFee(dto.getPackingFee());
+            shopMapper.updateById(shop);
+            log.info("更新店铺配置成功：{}", dto);
         }
-        
-        shop.setDeliveryRange(dto.getDeliveryRange());
-        shop.setMinDeliveryAmount(dto.getMinDeliveryAmount());
-        shop.setDeliveryFee(dto.getDeliveryFee());
-        shop.setPackingFee(dto.getPackingFee());
-        
-        shopMapper.updateById(shop);
-        
-        log.info("更新店铺配置成功：{}", dto);
     }
 }
 

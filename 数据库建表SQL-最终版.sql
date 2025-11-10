@@ -24,6 +24,8 @@ CREATE TABLE `user` (
   `points` INT(11) DEFAULT 0 COMMENT '积分',
   `status` INT(11) DEFAULT 1 COMMENT '状态(1-正常 0-禁用)',
   `level` INT(11) DEFAULT 0 COMMENT '会员等级',
+  `gender` INT(11) DEFAULT 0 COMMENT '性别(0-未知 1-男 2-女)',
+  `birthday` VARCHAR(20) DEFAULT NULL COMMENT '生日',
   `openid` VARCHAR(64) DEFAULT NULL COMMENT '微信openid',
   `unionid` VARCHAR(64) DEFAULT NULL COMMENT '微信unionid',
   `deleted` INT(11) DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
@@ -222,6 +224,8 @@ CREATE TABLE `orders` (
   `coupon_discount` DECIMAL(10, 2) DEFAULT 0.00 COMMENT '优惠券抵扣',
   `total_amount` DECIMAL(10, 2) NOT NULL COMMENT '订单总金额',
   `coupon_id` BIGINT(20) DEFAULT NULL COMMENT '优惠券ID',
+  `payment_url` VARCHAR(500) DEFAULT NULL COMMENT '支付链接',
+  `payment_link_id` BIGINT(20) DEFAULT NULL COMMENT '支付链接ID',
   `remark` VARCHAR(500) DEFAULT NULL COMMENT '订单备注',
   `pay_type` INT(11) DEFAULT NULL COMMENT '支付方式(1-微信 2-支付宝 3-余额)',
   `pay_time` DATETIME DEFAULT NULL COMMENT '支付时间',
@@ -365,7 +369,43 @@ INSERT INTO `banner` (`image`, `url`, `sort`, `status`) VALUES
 ('https://example.com/banner3.jpg', NULL, 3, 1);
 
 -- ========================================
--- 15. 公告表 (notice)
+-- 15. 支付链接配置表 (payment_link)
+-- ========================================
+DROP TABLE IF EXISTS `payment_link`;
+CREATE TABLE `payment_link` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `amount` DECIMAL(10, 2) NOT NULL COMMENT '支付金额（元）',
+  `payment_url` VARCHAR(500) NOT NULL COMMENT '支付链接URL',
+  `payment_type` VARCHAR(20) DEFAULT NULL COMMENT '支付类型(wechat-微信 alipay-支付宝)',
+  `qr_code_url` VARCHAR(500) DEFAULT NULL COMMENT '二维码图片URL（可选）',
+  `description` VARCHAR(255) DEFAULT NULL COMMENT '描述说明',
+  `status` INT(11) DEFAULT 1 COMMENT '状态(1-启用 0-禁用)',
+  `sort` INT(11) DEFAULT 0 COMMENT '排序',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_sort` (`sort`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='支付链接配置表';
+
+-- ========================================
+-- 16. 系统配置表 (system_config)
+-- ========================================
+DROP TABLE IF EXISTS `system_config`;
+CREATE TABLE `system_config` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `config_key` VARCHAR(100) NOT NULL COMMENT '配置键',
+  `config_value` TEXT COMMENT '配置值',
+  `config_desc` VARCHAR(255) DEFAULT NULL COMMENT '配置描述',
+  `config_type` VARCHAR(20) DEFAULT 'string' COMMENT '配置类型(string/number/boolean)',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_config_key` (`config_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统配置表';
+
+-- ========================================
+-- 17. 公告表 (notice)
 -- ========================================
 DROP TABLE IF EXISTS `notice`;
 CREATE TABLE `notice` (
@@ -390,7 +430,7 @@ INSERT INTO `notice` (`content`, `status`) VALUES
 SELECT '========================================' AS '';
 SELECT '数据库表创建完成！' AS '提示';
 SELECT '数据库名：yuntun_db' AS '';
-SELECT '共创建15张表，100%匹配实体类定义：' AS '';
+SELECT '共创建17张表，100%匹配实体类定义：' AS '';
 SELECT '1. user - 用户表' AS '';
 SELECT '2. admin - 管理员表' AS '';
 SELECT '3. shop - 店铺表' AS '';
@@ -405,7 +445,9 @@ SELECT '11. coupon - 优惠券表' AS '';
 SELECT '12. user_coupon - 用户优惠券表' AS '';
 SELECT '13. points_history - 积分明细表' AS '';
 SELECT '14. banner - 轮播图表' AS '';
-SELECT '15. notice - 公告表' AS '';
+SELECT '15. payment_link - 支付链接配置表' AS '';
+SELECT '16. system_config - 系统配置表' AS '';
+SELECT '17. notice - 公告表' AS '';
 SELECT '========================================' AS '';
 SELECT '默认管理员：admin / admin123' AS '';
 SELECT '测试用户：test_user / admin123' AS '';

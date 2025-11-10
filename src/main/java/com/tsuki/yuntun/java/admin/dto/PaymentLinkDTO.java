@@ -19,9 +19,9 @@ public class PaymentLinkDTO {
     private BigDecimal amount;
     
     /**
-     * 支付链接URL
+     * 收款码图片地址
      */
-    @NotBlank(message = "支付链接不能为空")
+    @NotBlank(message = "收款码图片地址不能为空")
     private String paymentUrl;
     
     /**
@@ -30,7 +30,7 @@ public class PaymentLinkDTO {
     private String paymentType;
     
     /**
-     * 二维码图片URL（可选）
+     * 二维码图片URL（可选，备用字段）
      */
     private String qrCodeUrl;
     

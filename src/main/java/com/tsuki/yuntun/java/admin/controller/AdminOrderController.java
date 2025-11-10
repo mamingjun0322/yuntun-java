@@ -2,6 +2,7 @@ package com.tsuki.yuntun.java.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tsuki.yuntun.java.admin.service.AdminOrderService;
+import com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO;
 import com.tsuki.yuntun.java.common.Result;
 import com.tsuki.yuntun.java.entity.Order;
 import lombok.RequiredArgsConstructor;
@@ -47,8 +48,8 @@ public class AdminOrderController {
      * 获取订单统计
      */
     @GetMapping("/statistics")
-    public Result<Object> getOrderStatistics() {
-        Object result = adminOrderService.getOrderStatistics();
+    public Result<OrderStatisticsVO> getOrderStatistics() {
+        OrderStatisticsVO result = adminOrderService.getOrderStatistics();
         return Result.success("获取成功", result);
     }
 }

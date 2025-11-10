@@ -44,6 +44,7 @@ public class AdminAuthController {
      */
     @PostMapping("/logout")
     public Result<Void> logout() {
+        adminAuthService.logout();
         return Result.success("退出成功", null);
     }
 }

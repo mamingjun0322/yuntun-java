@@ -28,7 +28,7 @@ public class PaymentLink implements Serializable {
     private BigDecimal amount;
     
     /**
-     * 支付链接URL
+     * 收款码图片地址
      */
     private String paymentUrl;
     
@@ -38,7 +38,7 @@ public class PaymentLink implements Serializable {
     private String paymentType;
     
     /**
-     * 二维码图片URL（可选）
+     * 二维码图片URL（可选，备用字段）
      */
     private String qrCodeUrl;
     

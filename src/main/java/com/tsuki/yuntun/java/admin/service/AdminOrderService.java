@@ -21,6 +21,6 @@ public interface AdminOrderService {
     /**
      * 获取订单统计
      */
-    Object getOrderStatistics();
+    com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO getOrderStatistics();
 }
 
