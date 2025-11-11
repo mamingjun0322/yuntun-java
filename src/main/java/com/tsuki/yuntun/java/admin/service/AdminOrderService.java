@@ -21,6 +21,6 @@ public interface AdminOrderService {
     /**
      * 获取订单统计
      */
-    com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO getOrderStatistics();
+    com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO getOrderStatistics(Integer days);
 }
 

@@ -70,7 +70,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     }
     
     @Override
-    public com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO getOrderStatistics() {
+    public com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO getOrderStatistics(Integer days) {
         com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO vo = new com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO();
         
         // 今日开始时间
@@ -127,9 +127,12 @@ public class AdminOrderServiceImpl implements AdminOrderService {
                 .collect(Collectors.toList());
         vo.setRecentOrders(recentOrders);
         
-        // 7. 获取近7天订单趋势
+        // 7. 获取订单趋势（根据传入的天数动态计算）
         List<com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.OrderTrendVO> orderTrend = new ArrayList<>();
-        for (int i = 6; i >= 0; i--) {
+        // 根据天数选择日期格式
+        String datePattern = days > 7 ? "yyyy-MM-dd" : "MM-dd";
+        
+        for (int i = days - 1; i >= 0; i--) {
             LocalDateTime dayStart = LocalDateTime.now().minusDays(i).withHour(0).withMinute(0).withSecond(0);
             LocalDateTime dayEnd = dayStart.plusDays(1);
             
@@ -147,7 +150,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
             
             com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.OrderTrendVO trend = 
                 new com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO.OrderTrendVO();
-            trend.setDate(dayStart.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd")));
+            trend.setDate(dayStart.format(java.time.format.DateTimeFormatter.ofPattern(datePattern)));
             trend.setCount(count);
             trend.setAmount(amount);
             orderTrend.add(trend);

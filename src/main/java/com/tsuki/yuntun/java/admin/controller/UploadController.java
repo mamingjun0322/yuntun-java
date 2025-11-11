@@ -1,8 +1,10 @@
 package com.tsuki.yuntun.java.admin.controller;
 
 import com.tsuki.yuntun.java.common.Result;
+import com.tsuki.yuntun.java.util.ImageUrlUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -22,13 +24,24 @@ import java.util.UUID;
 @Tag(name = "文件上传", description = "文件上传相关接口")
 @RestController
 @RequestMapping("/admin/upload")
+@RequiredArgsConstructor
 public class UploadController {
     
     @Value("${app.upload.path}")
     private String uploadPath;
     
-    @Value("${server.port}")
-    private String serverPort;
+    private final ImageUrlUtil imageUrlUtil;
+    
+    /**
+     * 测试静态资源访问
+     */
+    @Operation(summary = "测试静态资源访问")
+    @GetMapping("/test")
+    public Result<String> testUpload() {
+        String testUrl = "/api/uploads/test.jpg";
+        log.info("测试URL：{}", testUrl);
+        return Result.success("测试成功，请访问：" + testUrl);
+    }
     
     /**
      * 上传图片
@@ -84,11 +97,16 @@ public class UploadController {
             File destFile = new File(uploadDir, filename);
             file.transferTo(destFile);
             
-            // 返回访问URL
-            String url = "http://localhost:" + serverPort + "/api/uploads/" + filename;
+            // 返回访问URL（转换为完整URL，支持小程序访问）
+            String relativePath = "/api/uploads/" + filename;
+            String fullUrl = imageUrlUtil.toFullUrl(relativePath);
             
             log.info("文件上传成功：{} -> {}", filename, destFile.getAbsolutePath());
-            return Result.success("上传成功", url);
+            log.info("相对路径：{}", relativePath);
+            log.info("完整URL：{}", fullUrl);
+            Result<String> result = Result.success(fullUrl);
+            log.info("返回结果：{}", result);
+            return result;
             
         } catch (IOException e) {
             log.error("文件上传失败", e);

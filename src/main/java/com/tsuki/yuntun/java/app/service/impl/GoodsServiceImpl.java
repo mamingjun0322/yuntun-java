@@ -12,6 +12,7 @@ import com.tsuki.yuntun.java.common.exception.BusinessException;
 import com.tsuki.yuntun.java.entity.Goods;
 import com.tsuki.yuntun.java.entity.GoodsSpecs;
 import com.tsuki.yuntun.java.app.service.GoodsService;
+import com.tsuki.yuntun.java.util.ImageUrlUtil;
 import com.tsuki.yuntun.java.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class GoodsServiceImpl implements GoodsService {
     private final GoodsMapper goodsMapper;
     private final GoodsSpecsMapper goodsSpecsMapper;
     private final RedisUtil redisUtil;
+    private final ImageUrlUtil imageUrlUtil;
     
     @Override
     public Page<GoodsVO> getGoodsList(Long categoryId, Integer page, Integer pageSize) {
@@ -74,9 +76,9 @@ public class GoodsServiceImpl implements GoodsService {
         GoodsDetailVO vo = new GoodsDetailVO();
         BeanUtils.copyProperties(goods, vo);
         
-        // 处理图片列表
+        // 处理图片列表，转换为完整URL
         if (goods.getImages() != null && !goods.getImages().isEmpty()) {
-            vo.setImages(Arrays.asList(goods.getImages().split(",")));
+            vo.setImages(imageUrlUtil.toFullUrlList(goods.getImages()));
         }
         
         // 查询商品规格
@@ -144,10 +146,10 @@ public class GoodsServiceImpl implements GoodsService {
         GoodsVO vo = new GoodsVO();
         BeanUtils.copyProperties(goods, vo);
         
-        // 处理图片
+        // 处理图片，转换为完整URL
         if (goods.getImages() != null && !goods.getImages().isEmpty()) {
-            List<String> imageList = Arrays.asList(goods.getImages().split(","));
-            vo.setImage(imageList.get(0));
+            List<String> imageList = imageUrlUtil.toFullUrlList(goods.getImages());
+            vo.setImage(imageList.isEmpty() ? "" : imageList.get(0));
             vo.setImages(imageList);
         }
         

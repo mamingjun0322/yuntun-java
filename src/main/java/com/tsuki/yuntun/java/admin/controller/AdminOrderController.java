@@ -48,8 +48,8 @@ public class AdminOrderController {
      * 获取订单统计
      */
     @GetMapping("/statistics")
-    public Result<OrderStatisticsVO> getOrderStatistics() {
-        OrderStatisticsVO result = adminOrderService.getOrderStatistics();
+    public Result<OrderStatisticsVO> getOrderStatistics(@RequestParam(required = false, defaultValue = "7") Integer days) {
+        OrderStatisticsVO result = adminOrderService.getOrderStatistics(days);
         return Result.success("获取成功", result);
     }
 }

@@ -104,6 +104,16 @@ public class OrderVO {
     private Boolean commented;
     
     /**
+     * 收款码图片地址
+     */
+    private String paymentUrl;
+    
+    /**
+     * 支付链接ID
+     */
+    private Long paymentLinkId;
+    
+    /**
      * 创建时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
