@@ -384,5 +384,36 @@ public class UserServiceImpl implements UserService {
         
         log.info("用户ID: {} 修改密码成功", userId);
     }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addPoints(Long userId, Integer points, Integer type, String title) {
+        if (points == null || points == 0) {
+            log.warn("积分数量为0，跳过积分增加，用户ID: {}", userId);
+            return;
+        }
+        
+        // 更新用户积分
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            log.error("用户不存在，无法增加积分，用户ID: {}", userId);
+            return;
+        }
+        
+        Integer currentPoints = user.getPoints() != null ? user.getPoints() : 0;
+        user.setPoints(currentPoints + points);
+        userMapper.updateById(user);
+        
+        // 记录积分明细
+        PointsHistory history = new PointsHistory();
+        history.setUserId(userId);
+        history.setTitle(title);
+        history.setPoints(points);
+        history.setType(type);
+        pointsHistoryMapper.insert(history);
+        
+        log.info("用户ID: {} 增加积分: {}，类型: {}，当前总积分: {}", 
+                userId, points, type, user.getPoints());
+    }
 }
 

@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tsuki.yuntun.java.admin.service.AdminOrderService;
 import com.tsuki.yuntun.java.admin.vo.AdminOrderVO;
+import com.tsuki.yuntun.java.app.service.UserService;
+import com.tsuki.yuntun.java.common.config.SystemConfigUtil;
 import com.tsuki.yuntun.java.common.exception.BusinessException;
 import com.tsuki.yuntun.java.entity.Order;
 import com.tsuki.yuntun.java.entity.OrderGoods;
@@ -30,6 +32,8 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     
     private final OrderMapper orderMapper;
     private final OrderGoodsMapper orderGoodsMapper;
+    private final UserService userService;
+    private final SystemConfigUtil systemConfigUtil;
     
     @Override
     public Page<AdminOrderVO> getOrderList(Integer type, Integer status, String keyword, Integer page, Integer pageSize) {
@@ -89,11 +93,32 @@ public class AdminOrderServiceImpl implements AdminOrderService {
             throw new BusinessException("订单不存在");
         }
         
+        Integer oldStatus = order.getStatus();
         order.setStatus(status);
         
-        // 如果是完成订单，记录完成时间
-        if (status == 4) {
+        // 如果是完成订单，记录完成时间并增加积分
+        if (status == 4 && oldStatus != 4) {
             order.setFinishTime(LocalDateTime.now());
+            
+            // 增加用户积分
+            try {
+                // 从配置读取积分倍率
+                Integer pointsRate = systemConfigUtil.getOrderPointsRate();
+                
+                // 计算积分：订单金额 * 倍率
+                BigDecimal orderAmount = order.getTotalAmount();
+                int points = orderAmount.multiply(new BigDecimal(pointsRate)).intValue();
+                
+                if (points > 0) {
+                    String title = String.format("订单消费（订单号：%s）", order.getOrderNo());
+                    userService.addPoints(order.getUserId(), points, 2, title);
+                    log.info("订单完成，用户ID: {} 获得积分: {}，订单金额: {}，倍率: {}", 
+                            order.getUserId(), points, orderAmount, pointsRate);
+                }
+            } catch (Exception e) {
+                log.error("订单完成增加积分失败，订单ID: {}", id, e);
+                // 积分增加失败不影响订单状态更新
+            }
         }
         
         orderMapper.updateById(order);

@@ -63,5 +63,14 @@ public interface UserService {
      * 修改密码
      */
     void updatePassword(Long userId, com.tsuki.yuntun.java.app.dto.UpdatePasswordDTO dto);
+    
+    /**
+     * 增加用户积分
+     * @param userId 用户ID
+     * @param points 积分数量
+     * @param type 积分类型 1-签到 2-消费 3-退款
+     * @param title 积分标题
+     */
+    void addPoints(Long userId, Integer points, Integer type, String title);
 }
 
