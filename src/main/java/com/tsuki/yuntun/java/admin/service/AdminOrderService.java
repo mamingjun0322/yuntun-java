@@ -1,6 +1,7 @@
 package com.tsuki.yuntun.java.admin.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.tsuki.yuntun.java.admin.vo.AdminOrderVO;
 import com.tsuki.yuntun.java.entity.Order;
 
 /**
@@ -11,7 +12,7 @@ public interface AdminOrderService {
     /**
      * 获取订单列表（分页）
      */
-    Page<Order> getOrderList(Integer type, Integer status, String keyword, Integer page, Integer pageSize);
+    Page<AdminOrderVO> getOrderList(Integer type, Integer status, String keyword, Integer page, Integer pageSize);
     
     /**
      * 更新订单状态

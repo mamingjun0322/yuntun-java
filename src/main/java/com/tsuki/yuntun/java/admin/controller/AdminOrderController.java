@@ -2,6 +2,7 @@ package com.tsuki.yuntun.java.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tsuki.yuntun.java.admin.service.AdminOrderService;
+import com.tsuki.yuntun.java.admin.vo.AdminOrderVO;
 import com.tsuki.yuntun.java.admin.vo.OrderStatisticsVO;
 import com.tsuki.yuntun.java.common.Result;
 import com.tsuki.yuntun.java.entity.Order;
@@ -24,13 +25,13 @@ public class AdminOrderController {
      * 获取订单列表（分页）
      */
     @GetMapping("/list")
-    public Result<Page<Order>> getOrderList(
+    public Result<Page<AdminOrderVO>> getOrderList(
             @RequestParam(required = false) Integer type,
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        Page<Order> result = adminOrderService.getOrderList(type, status, keyword, page, pageSize);
+        Page<AdminOrderVO> result = adminOrderService.getOrderList(type, status, keyword, page, pageSize);
         return Result.success("获取成功", result);
     }
     

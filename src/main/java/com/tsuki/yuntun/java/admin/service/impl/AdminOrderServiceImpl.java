@@ -3,11 +3,15 @@ package com.tsuki.yuntun.java.admin.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tsuki.yuntun.java.admin.service.AdminOrderService;
+import com.tsuki.yuntun.java.admin.vo.AdminOrderVO;
 import com.tsuki.yuntun.java.common.exception.BusinessException;
 import com.tsuki.yuntun.java.entity.Order;
+import com.tsuki.yuntun.java.entity.OrderGoods;
 import com.tsuki.yuntun.java.app.mapper.OrderMapper;
+import com.tsuki.yuntun.java.app.mapper.OrderGoodsMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,9 +29,10 @@ import java.util.stream.Collectors;
 public class AdminOrderServiceImpl implements AdminOrderService {
     
     private final OrderMapper orderMapper;
+    private final OrderGoodsMapper orderGoodsMapper;
     
     @Override
-    public Page<Order> getOrderList(Integer type, Integer status, String keyword, Integer page, Integer pageSize) {
+    public Page<AdminOrderVO> getOrderList(Integer type, Integer status, String keyword, Integer page, Integer pageSize) {
         Page<Order> pageParam = new Page<>(page, pageSize);
         
         LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
@@ -48,7 +53,32 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         
         wrapper.orderByDesc(Order::getCreateTime);
         
-        return orderMapper.selectPage(pageParam, wrapper);
+        Page<Order> orderPage = orderMapper.selectPage(pageParam, wrapper);
+        
+        // 转换为VO并填充商品列表
+        Page<AdminOrderVO> voPage = new Page<>(orderPage.getCurrent(), orderPage.getSize(), orderPage.getTotal());
+        List<AdminOrderVO> voList = orderPage.getRecords().stream().map(order -> {
+            AdminOrderVO vo = new AdminOrderVO();
+            BeanUtils.copyProperties(order, vo);
+            
+            // 查询订单的商品列表
+            List<OrderGoods> goodsList = orderGoodsMapper.selectList(
+                new LambdaQueryWrapper<OrderGoods>().eq(OrderGoods::getOrderId, order.getId())
+            );
+            
+            // 转换为商品VO
+            List<AdminOrderVO.OrderGoodsVO> goodsVOList = goodsList.stream().map(goods -> {
+                AdminOrderVO.OrderGoodsVO goodsVO = new AdminOrderVO.OrderGoodsVO();
+                BeanUtils.copyProperties(goods, goodsVO);
+                return goodsVO;
+            }).collect(Collectors.toList());
+            
+            vo.setGoodsList(goodsVOList);
+            return vo;
+        }).collect(Collectors.toList());
+        
+        voPage.setRecords(voList);
+        return voPage;
     }
     
     @Override
